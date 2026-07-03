@@ -1,15 +1,27 @@
+# Machine Learning
+
+This is my repository for learning machine-learning techniques by implementing them
+from scratch — no libraries, just the raw algorithm plus visualizations to see it work.
+
+Implemented so far:
+
+- [**k-means clustering**](#k-means-clustering-1d-from-scratch) — grouping 1D data into `k` clusters.
+
+---
+
 # k-means clustering (1D, from scratch)
 
 A tiny, dependency-free implementation of the **k-means** algorithm on a 1-dimensional
 dataset, plus a self-drawn PNG plotter that records every step and stitches the frames
-into an animated GIF.
+into an animated GIF. Lives in [`k_mean_cluster/`](k_mean_cluster/).
 
 ```bash
+cd k_mean_cluster
 deno run -A main.js
 ```
 
-This runs the algorithm, writes one PNG per step into `frames/`, and renders a
-timestamped `k_means_<epoch>.gif`.
+This runs the algorithm, writes one PNG per step into `k_mean_cluster/frames/`, and
+renders a timestamped `k_means_<epoch>.gif`.
 
 ---
 
@@ -24,12 +36,12 @@ runs — same data, different starting points, different outcomes.
 
 | Timestamp | Iterations | Animation |
 |---|---|---|
-| 2026-07-03 15:37:04 | 2 | ![run](k_means_1783085824253.gif) |
-| 2026-07-03 15:37:07 | 4 | ![run](k_means_1783085827059.gif) |
-| 2026-07-03 15:37:07 | 5 | ![run](k_means_1783085827531.gif) |
-| 2026-07-03 15:37:07 | 2 | ![run](k_means_1783085827974.gif) |
-| 2026-07-03 15:37:08 | 2 | ![run](k_means_1783085828398.gif) |
-| 2026-07-03 15:37:08 | 1 | ![run](k_means_1783085828793.gif) |
+| 2026-07-03 15:37:04 | 2 | ![run](k_mean_cluster/k_means_1783085824253.gif) |
+| 2026-07-03 15:37:07 | 4 | ![run](k_mean_cluster/k_means_1783085827059.gif) |
+| 2026-07-03 15:37:07 | 5 | ![run](k_mean_cluster/k_means_1783085827531.gif) |
+| 2026-07-03 15:37:07 | 2 | ![run](k_mean_cluster/k_means_1783085827974.gif) |
+| 2026-07-03 15:37:08 | 2 | ![run](k_mean_cluster/k_means_1783085828398.gif) |
+| 2026-07-03 15:37:08 | 1 | ![run](k_mean_cluster/k_means_1783085828793.gif) |
 
 ---
 
@@ -72,6 +84,8 @@ runs — same data, different starting points, different outcomes.
 ---
 
 ## Files
+
+All under [`k_mean_cluster/`](k_mean_cluster/):
 
 | File | Purpose |
 |---|---|
