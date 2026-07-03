@@ -134,6 +134,38 @@ let f_p_a_nu8_png = async function(a_nu8_pixel, n_scl_x, n_scl_y){
     ]);
 };
 
+// 5x7 bitmap font, uppercase + space. each glyph is 7 rows of a 5-char string
+// where '#' == a filled pixel. unknown characters fall back to a blank space.
+let o_font_5x7 = {
+    'A':['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+    'B':['####.','#...#','#...#','####.','#...#','#...#','####.'],
+    'C':['.###.','#...#','#....','#....','#....','#...#','.###.'],
+    'D':['####.','#...#','#...#','#...#','#...#','#...#','####.'],
+    'E':['#####','#....','#....','###..','#....','#....','#####'],
+    'F':['#####','#....','#....','###..','#....','#....','#....'],
+    'G':['.###.','#...#','#....','#.###','#...#','#...#','.###.'],
+    'H':['#...#','#...#','#...#','#####','#...#','#...#','#...#'],
+    'I':['.###.','..#..','..#..','..#..','..#..','..#..','.###.'],
+    'J':['..###','...#.','...#.','...#.','#..#.','#..#.','.##..'],
+    'K':['#...#','#..#.','#.#..','##...','#.#..','#..#.','#...#'],
+    'L':['#....','#....','#....','#....','#....','#....','#####'],
+    'M':['#...#','##.##','#.#.#','#.#.#','#...#','#...#','#...#'],
+    'N':['#...#','##..#','#.#.#','#..##','#...#','#...#','#...#'],
+    'O':['.###.','#...#','#...#','#...#','#...#','#...#','.###.'],
+    'P':['####.','#...#','#...#','####.','#....','#....','#....'],
+    'Q':['.###.','#...#','#...#','#...#','#.#.#','#..#.','.##.#'],
+    'R':['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+    'S':['.####','#....','#....','.###.','....#','....#','####.'],
+    'T':['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
+    'U':['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
+    'V':['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
+    'W':['#...#','#...#','#...#','#.#.#','#.#.#','##.##','#...#'],
+    'X':['#...#','#...#','.#.#.','..#..','.#.#.','#...#','#...#'],
+    'Y':['#...#','#...#','.#.#.','..#..','..#..','..#..','..#..'],
+    'Z':['#####','....#','...#.','..#..','.#...','#....','#####'],
+    ' ':['.....','.....','.....','.....','.....','.....','.....']
+};
+
 // build a drawing surface with pixel/line/rect/dot primitives ----------------
 let f_o_surface = function(n_scl_x, n_scl_y){
     let a_nu8_pixel = new Uint8Array(n_scl_x * n_scl_y * 3).fill(255);
@@ -181,7 +213,35 @@ let f_o_surface = function(n_scl_x, n_scl_y){
         }
     };
 
-    return { a_nu8_pixel, f_set_pixel, f_line, f_rect, f_dot };
+    // draw text with the 5x7 font at top-left (n_x, n_y). n_scale blows up each
+    // font pixel into an n_scale x n_scale block so it stays readable.
+    let f_text = function(n_x, n_y, s_text, a_n_rgb, n_scale){
+        n_scale = n_scale || 1;
+        let s_upper = String(s_text).toUpperCase();
+        let n_x__cur = n_x;
+        for(let n_it_char = 0; n_it_char < s_upper.length; n_it_char++){
+            let a_s_row = o_font_5x7[s_upper[n_it_char]] || o_font_5x7[' '];
+            for(let n_it_row = 0; n_it_row < 7; n_it_row++){
+                let s_row = a_s_row[n_it_row];
+                for(let n_it_col = 0; n_it_col < 5; n_it_col++){
+                    if(s_row[n_it_col] !== '#') continue;
+                    // blow up this lit pixel into an n_scale x n_scale block
+                    for(let n_it_sy = 0; n_it_sy < n_scale; n_it_sy++){
+                        for(let n_it_sx = 0; n_it_sx < n_scale; n_it_sx++){
+                            f_set_pixel(
+                                n_x__cur + n_it_col * n_scale + n_it_sx,
+                                n_y + n_it_row * n_scale + n_it_sy,
+                                a_n_rgb
+                            );
+                        }
+                    }
+                }
+            }
+            n_x__cur += (5 + 1) * n_scale; // advance one glyph + a 1px column gap
+        }
+    };
+
+    return { a_nu8_pixel, f_set_pixel, f_line, f_rect, f_dot, f_text };
 };
 
 // draw one dataset inside its own coordinate system (a framed cell) ----------
@@ -284,10 +344,13 @@ let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, 
     let n_scl_y = o_opt.n_scl_y || 200;
     let n_margin = o_opt.n_margin || 20;
     let n_pad = 6; // inner padding so points don't sit on the frame
+    let s_caption = o_opt.s_caption || '';        // optional text drawn top-left
+    let b_hide_cluster = o_opt.b_hide_cluster === true; // skip the centroid markers
 
     let a_n_rgb__frame = [170, 170, 170];
     let a_n_rgb__axis = [120, 120, 120];
     let a_n_rgb__point = [60, 60, 60];
+    let a_n_rgb__caption = [40, 40, 40];
 
     let o_surface = f_o_surface(n_scl_x, n_scl_y);
 
@@ -350,15 +413,23 @@ let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, 
         o_surface.f_dot(f_n_px_x(n_val), n_px_y__axis, 2, a_n_rgb);
     }
 
-    // initial cluster points: distinct hue, vertical marker + big dot on top
-    for(let n_it_cluster = 0; n_it_cluster < n_its_cluster; n_it_cluster++){
-        let o_cluster = a_o_cluster[n_it_cluster];
-        let n_val = o_cluster.n_val;
-        if(typeof n_val !== 'number' || !isFinite(n_val)) continue;
-        let a_n_rgb = a_a_n_rgb__cluster[n_it_cluster];
-        let n_px_x = f_n_px_x(n_val);
-        o_surface.f_line(n_px_x, n_y0 + n_pad, n_px_x, n_y1 - n_pad, a_n_rgb);
-        o_surface.f_dot(n_px_x, n_px_y__axis, 4, a_n_rgb);
+    // cluster centroids: distinct hue, vertical marker + big dot on top.
+    // skipped entirely when b_hide_cluster (e.g. the "random datapoints" frame).
+    if(!b_hide_cluster){
+        for(let n_it_cluster = 0; n_it_cluster < n_its_cluster; n_it_cluster++){
+            let o_cluster = a_o_cluster[n_it_cluster];
+            let n_val = o_cluster.n_val;
+            if(typeof n_val !== 'number' || !isFinite(n_val)) continue;
+            let a_n_rgb = a_a_n_rgb__cluster[n_it_cluster];
+            let n_px_x = f_n_px_x(n_val);
+            o_surface.f_line(n_px_x, n_y0 + n_pad, n_px_x, n_y1 - n_pad, a_n_rgb);
+            o_surface.f_dot(n_px_x, n_px_y__axis, 4, a_n_rgb);
+        }
+    }
+
+    // caption: step name in the top-left corner, inside the frame
+    if(s_caption){
+        o_surface.f_text(n_x0 + n_pad, n_y0 + n_pad, s_caption, a_n_rgb__caption, 2);
     }
 
     let a_nu8_png = await f_p_a_nu8_png(o_surface.a_nu8_pixel, n_scl_x, n_scl_y);
@@ -455,6 +526,53 @@ let f_p_video__frames = async function(s_dir, s_path__out, o_opt){
     return s_stderr;
 };
 
+// stitch the numbered png frames in s_dir into an animated gif via ffmpeg.
+// requires ffmpeg on PATH and `deno run --allow-run --allow-read`.
+// uses a two-stage palettegen/paletteuse filtergraph so the gif keeps clean
+// colors instead of ffmpeg's default 256-color guess.
+// o_opt: { n_fps = 2, n_len = 4 (digit count, must match the recorder) }
+let f_p_gif__frames = async function(s_dir, s_path__out, o_opt){
+    o_opt = o_opt || {};
+    let n_fps = o_opt.n_fps || 2;
+    let n_len = o_opt.n_len || 4;
+    let s_pattern = `${s_dir}/frame_%0${n_len}d.png`;
+
+    let o_cmd = new Deno.Command('ffmpeg', {
+        args: [
+            '-y',                          // overwrite output without asking
+            '-framerate', String(n_fps),   // input framerate (before -i)
+            '-i', s_pattern,
+            // split the stream: one branch builds the palette, the other uses it
+            '-vf', `fps=${n_fps},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
+            '-loop', '0',                  // 0 = loop the gif forever
+            s_path__out
+        ],
+        stdout: 'piped',
+        stderr: 'piped'
+    });
+
+    let o_result;
+    try {
+        o_result = await o_cmd.output();
+    } catch(o_err){
+        if(o_err instanceof Deno.errors.NotFound){
+            throw new Error(
+                'ffmpeg not found on PATH. install it first, e.g.\n' +
+                '  sudo apt install ffmpeg   (linux)\n' +
+                '  brew install ffmpeg       (mac)'
+            );
+        }
+        throw o_err;
+    }
+
+    let s_stderr = new TextDecoder().decode(o_result.stderr);
+    if(!o_result.success){
+        throw new Error(`ffmpeg failed (exit ${o_result.code}):\n${s_stderr}`);
+    }
+    console.log(`wrote gif ${s_path__out} from frames in ${s_dir}/ (${n_fps} fps)`);
+    return s_stderr;
+};
+
 // wrap a number so it loops inside [n_min, n_max) (e.g. 25 -> -15 for -20..20).
 // the double modulo keeps it correct for negative inputs too, since js '%'
 // follows the sign of the dividend.
@@ -504,4 +622,4 @@ let f_a_n_rand_clustered = function(
     })
     return a_a_n
 }
-export { f_write_image_plot_datasets, f_write_image_plot_dataset_with_clusters, f_a_n_rgb__hsl, f_a_n_rand_clustered, f_a_n_rand_mathrand, f_n_wrap, f_o_frame_recorder, f_p_video__frames };
+export { f_write_image_plot_datasets, f_write_image_plot_dataset_with_clusters, f_a_n_rgb__hsl, f_a_n_rand_clustered, f_a_n_rand_mathrand, f_n_wrap, f_o_frame_recorder, f_p_video__frames, f_p_gif__frames };
