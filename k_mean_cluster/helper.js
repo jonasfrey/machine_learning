@@ -334,14 +334,36 @@ let f_write_image_plot_datasets = async function(a_a_n, s_path, o_opt){
     );
 };
 
-// render ONE 1d dataset together with the initial cluster points on a single
-// number line. the plain datapoints are drawn neutral (gray), every initial
-// cluster point gets its own distinct hue and a taller vertical marker so it
-// stands out against the datapoints sitting on the same axis.
-let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, s_path, o_opt){
+// a point value 'v' is dimension-agnostic: a plain number (1d) or an array of
+// numbers ([x,y], [x,y,z], ...). these two helpers let the plot treat both.
+
+// treat a value as a vector: scalar -> [scalar], vector -> itself (unchanged)
+let f_a_n_vec = function(v){
+    return Array.isArray(v) ? v : [v];
+};
+// dimensionality of a dataset, read from the first usable point (default 1)
+let f_n_dims = function(a_v){
+    for(let n_it = 0; n_it < a_v.length; n_it++){
+        let v = a_v[n_it];
+        if(Array.isArray(v)) return v.length;
+        if(typeof v === 'number') return 1;
+    }
+    return 1;
+};
+
+// render ONE dataset of any dimension together with the cluster centroids.
+// 1d  -> points sit on a single horizontal number line (x = value).
+// 2d+ -> scatter plot using component 0 as x and component 1 as y (higher
+//        dimensions are projected onto their first two components).
+// plain datapoints are drawn neutral (gray) until assigned, then they inherit
+// their cluster's hue; every centroid gets its own distinct hue and marker.
+let f_write_image_plot_dataset_with_clusters = async function(a_v, a_o_cluster, s_path, o_opt){
     o_opt = o_opt || {};
+    let n_dims = f_n_dims(a_v);
+    let b_2d = n_dims >= 2; // component 1 gives a real y axis
+
     let n_scl_x = o_opt.n_scl_x || 800;
-    let n_scl_y = o_opt.n_scl_y || 200;
+    let n_scl_y = o_opt.n_scl_y || (b_2d ? 600 : 200);
     let n_margin = o_opt.n_margin || 20;
     let n_pad = 6; // inner padding so points don't sit on the frame
     let s_caption = o_opt.s_caption || '';        // optional text drawn top-left
@@ -362,36 +384,64 @@ let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, 
     // frame = the coordinate system box
     o_surface.f_rect(n_x0, n_y0, n_x1, n_y1, a_n_rgb__frame);
 
-    // the single horizontal x-axis, centered vertically
-    let n_px_y__axis = Math.round((n_y0 + n_y1) / 2);
-    o_surface.f_line(n_x0, n_px_y__axis, n_x1, n_px_y__axis, a_n_rgb__axis);
-
-    // horizontal range across both datapoints and cluster values
-    let n_min = Infinity;
-    let n_max = -Infinity;
-    let f_track_range = function(n_val){
-        if(typeof n_val !== 'number' || !isFinite(n_val)) return;
-        if(n_val < n_min) n_min = n_val;
-        if(n_val > n_max) n_max = n_val;
+    // per-axis range across both datapoints and centroids. component 0 -> x,
+    // component 1 -> y (only tracked / used in 2d+).
+    let n_x_min = Infinity, n_x_max = -Infinity;
+    let n_y_min = Infinity, n_y_max = -Infinity;
+    let f_track_range = function(v){
+        let a_n = f_a_n_vec(v);
+        let n_cx = a_n[0];
+        if(typeof n_cx === 'number' && isFinite(n_cx)){
+            if(n_cx < n_x_min) n_x_min = n_cx;
+            if(n_cx > n_x_max) n_x_max = n_cx;
+        }
+        if(b_2d){
+            let n_cy = a_n[1];
+            if(typeof n_cy === 'number' && isFinite(n_cy)){
+                if(n_cy < n_y_min) n_y_min = n_cy;
+                if(n_cy > n_y_max) n_y_max = n_cy;
+            }
+        }
     };
-    for(let n_it_point = 0; n_it_point < a_n.length; n_it_point++) f_track_range(a_n[n_it_point]);
-    for(let n_it_cluster = 0; n_it_cluster < a_o_cluster.length; n_it_cluster++) f_track_range(a_o_cluster[n_it_cluster].n_val);
-    if(!isFinite(n_min) || !isFinite(n_max)){ n_min = 0; n_max = 1; }
-    let n_range = (n_max - n_min) || 1;
+    for(let n_it_point = 0; n_it_point < a_v.length; n_it_point++) f_track_range(a_v[n_it_point]);
+    for(let n_it_cluster = 0; n_it_cluster < a_o_cluster.length; n_it_cluster++) f_track_range(a_o_cluster[n_it_cluster].v_val);
+    if(!isFinite(n_x_min) || !isFinite(n_x_max)){ n_x_min = 0; n_x_max = 1; }
+    if(!isFinite(n_y_min) || !isFinite(n_y_max)){ n_y_min = 0; n_y_max = 1; }
+    let n_range_x = (n_x_max - n_x_min) || 1;
+    let n_range_y = (n_y_max - n_y_min) || 1;
 
     let n_px_x__left = n_x0 + n_pad;
     let n_scl_x__plot = (n_x1 - n_pad) - n_px_x__left;
-    let f_n_px_x = function(n_val){
-        let n_val_nor = (n_val - n_min) / n_range;
-        return Math.round(n_px_x__left + n_val_nor * n_scl_x__plot);
+    let n_px_y__top = n_y0 + n_pad;
+    let n_scl_y__plot = (n_y1 - n_pad) - n_px_y__top;
+    let n_px_y__axis = Math.round((n_y0 + n_y1) / 2);
+
+    // 1d: draw the single horizontal x-axis, centered vertically
+    if(!b_2d){
+        o_surface.f_line(n_x0, n_px_y__axis, n_x1, n_px_y__axis, a_n_rgb__axis);
+    }
+
+    // point value -> pixel coords. 1d y sits on the axis; 2d y comes from
+    // component 1, flipped so larger values are drawn higher up the image.
+    let f_a_n_px = function(v){
+        let a_n = f_a_n_vec(v);
+        let n_x_nor = (a_n[0] - n_x_min) / n_range_x;
+        let n_px_x = Math.round(n_px_x__left + n_x_nor * n_scl_x__plot);
+        let n_px_y = n_px_y__axis;
+        if(b_2d){
+            let n_y_nor = (a_n[1] - n_y_min) / n_range_y;
+            n_px_y = Math.round(n_px_y__top + (1 - n_y_nor) * n_scl_y__plot);
+        }
+        return [n_px_x, n_px_y];
     };
 
     let n_its_cluster = a_o_cluster.length;
 
     // one hue per cluster, and a value->rgb lookup for every point assigned to a
     // cluster, so a datapoint inherits the color of the cluster it belongs to.
+    // vectors can't be Map keys directly, so key on the JSON of the value.
     let a_a_n_rgb__cluster = new Array(n_its_cluster);
-    let o_rgb__by_val = new Map();
+    let o_rgb__by_key = new Map();
     for(let n_it_cluster = 0; n_it_cluster < n_its_cluster; n_it_cluster++){
         let o_cluster = a_o_cluster[n_it_cluster];
         // normalize the cluster index onto the hue wheel; divide by the count
@@ -399,31 +449,35 @@ let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, 
         let n_it_nor_cluster = n_it_cluster / n_its_cluster;
         let a_n_rgb = f_a_n_rgb__hsl(n_it_nor_cluster, 1, 0.5);
         a_a_n_rgb__cluster[n_it_cluster] = a_n_rgb;
-        let a_n__member = o_cluster.a_n || [];
-        for(let n_it_member = 0; n_it_member < a_n__member.length; n_it_member++){
-            o_rgb__by_val.set(a_n__member[n_it_member], a_n_rgb);
+        let a_v__member = o_cluster.a_v || [];
+        for(let n_it_member = 0; n_it_member < a_v__member.length; n_it_member++){
+            o_rgb__by_key.set(JSON.stringify(a_v__member[n_it_member]), a_n_rgb);
         }
     }
 
     // datapoints: colored with their cluster's hue if assigned, else neutral gray
-    for(let n_it_point = 0; n_it_point < a_n.length; n_it_point++){
-        let n_val = a_n[n_it_point];
-        if(typeof n_val !== 'number' || !isFinite(n_val)) continue;
-        let a_n_rgb = o_rgb__by_val.get(n_val) || a_n_rgb__point;
-        o_surface.f_dot(f_n_px_x(n_val), n_px_y__axis, 2, a_n_rgb);
+    for(let n_it_point = 0; n_it_point < a_v.length; n_it_point++){
+        let v = a_v[n_it_point];
+        let a_n_rgb = o_rgb__by_key.get(JSON.stringify(v)) || a_n_rgb__point;
+        let a_n_px = f_a_n_px(v);
+        o_surface.f_dot(a_n_px[0], a_n_px[1], 2, a_n_rgb);
     }
 
-    // cluster centroids: distinct hue, vertical marker + big dot on top.
-    // skipped entirely when b_hide_cluster (e.g. the "random datapoints" frame).
+    // cluster centroids: distinct hue + big dot. in 1d a full-height vertical
+    // marker, in 2d a small crosshair. skipped when b_hide_cluster (e.g. the
+    // "random datapoints" frame).
     if(!b_hide_cluster){
         for(let n_it_cluster = 0; n_it_cluster < n_its_cluster; n_it_cluster++){
             let o_cluster = a_o_cluster[n_it_cluster];
-            let n_val = o_cluster.n_val;
-            if(typeof n_val !== 'number' || !isFinite(n_val)) continue;
             let a_n_rgb = a_a_n_rgb__cluster[n_it_cluster];
-            let n_px_x = f_n_px_x(n_val);
-            o_surface.f_line(n_px_x, n_y0 + n_pad, n_px_x, n_y1 - n_pad, a_n_rgb);
-            o_surface.f_dot(n_px_x, n_px_y__axis, 4, a_n_rgb);
+            let a_n_px = f_a_n_px(o_cluster.v_val);
+            if(b_2d){
+                o_surface.f_line(a_n_px[0] - 6, a_n_px[1], a_n_px[0] + 6, a_n_px[1], a_n_rgb);
+                o_surface.f_line(a_n_px[0], a_n_px[1] - 6, a_n_px[0], a_n_px[1] + 6, a_n_rgb);
+            }else{
+                o_surface.f_line(a_n_px[0], n_y0 + n_pad, a_n_px[0], n_y1 - n_pad, a_n_rgb);
+            }
+            o_surface.f_dot(a_n_px[0], a_n_px[1], 4, a_n_rgb);
         }
     }
 
@@ -435,7 +489,7 @@ let f_write_image_plot_dataset_with_clusters = async function(a_n, a_o_cluster, 
     let a_nu8_png = await f_p_a_nu8_png(o_surface.a_nu8_pixel, n_scl_x, n_scl_y);
     Deno.writeFileSync(s_path, a_nu8_png);
     console.log(
-        `wrote ${a_n.length} datapoint(s) and ${n_its_cluster} cluster point(s) ` +
+        `wrote ${a_v.length} datapoint(s) (${n_dims}d) and ${n_its_cluster} cluster point(s) ` +
         `to ${s_path} (${n_scl_x}x${n_scl_y})`
     );
 };

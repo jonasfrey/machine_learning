@@ -1,0 +1,201 @@
+/* Copyright (C) 2026 Jonas Immanuel Frey - Licensed under MIT. See LICENSE file for details */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --c_bg: #14161b;
+  --c_bar: #1e222b;
+  --c_win: #232833;
+  --c_win_bar: #2c3340;
+  --c_border: #3a4252;
+  --c_text: #e6e9ef;
+  --c_muted: #8b94a7;
+  --c_accent: #4a9eff;
+  --c_accent_dim: #2c5a8c;
+  --c_danger: #ff5c5c;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--c_bg);
+  color: var(--c_text);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  user-select: none;
+}
+
+#o_app {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+/* ---------------------------------------------------------------- top bar */
+
+.o_topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--c_bar);
+  border-bottom: 1px solid var(--c_border);
+  z-index: 100000;
+}
+
+.o_topbar .s_title {
+  font-weight: 600;
+  margin-right: 12px;
+  color: var(--c_accent);
+}
+
+.o_topbar .b_conn {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--c_muted);
+}
+.o_topbar .b_conn.b_on {
+  color: #57d38c;
+}
+
+button {
+  font: inherit;
+  color: var(--c_text);
+  background: var(--c_win_bar);
+  border: 1px solid var(--c_border);
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+button:hover {
+  border-color: var(--c_accent);
+}
+button.b_active {
+  background: var(--c_accent_dim);
+  border-color: var(--c_accent);
+}
+button.b_danger:hover {
+  border-color: var(--c_danger);
+  color: var(--c_danger);
+}
+
+select,
+input[type='text'] {
+  font: inherit;
+  color: var(--c_text);
+  background: var(--c_win);
+  border: 1px solid var(--c_border);
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+
+/* ---------------------------------------------------------------- window */
+
+.o_window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: var(--c_win);
+  border: 1px solid var(--c_border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  min-width: 260px;
+  min-height: 180px;
+}
+
+.o_window > .o_titlebar {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  background: var(--c_win_bar);
+  border-bottom: 1px solid var(--c_border);
+  cursor: move;
+  gap: 8px;
+}
+.o_window > .o_titlebar .s_title {
+  font-weight: 600;
+  font-size: 12px;
+}
+.o_window > .o_titlebar .b_close {
+  margin-left: auto;
+  padding: 2px 8px;
+  line-height: 1;
+}
+
+.o_window > .o_body {
+  flex: 1;
+  overflow: auto;
+  padding: 10px;
+  min-height: 0;
+}
+
+.o_resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--c_border) 50%);
+}
+
+/* ---------------------------------------------------------------- controls */
+
+.o_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.o_slider {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+  flex: 1;
+}
+.o_slider label {
+  font-size: 11px;
+  color: var(--c_muted);
+  display: flex;
+  justify-content: space-between;
+}
+.o_slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--c_accent);
+}
+
+.o_canvas_wrap {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--c_border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0d0f13;
+}
+canvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.s_hint {
+  font-size: 11px;
+  color: var(--c_muted);
+  margin-top: 6px;
+}

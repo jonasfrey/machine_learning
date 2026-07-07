@@ -1,0 +1,13 @@
+{
+  "editor.tokenColorCustomizations": {
+  "textMateRules": [
+    { "scope": "meta.separator.markdown", "settings": { "foreground": "#6a6a6a" } },
+    { "scope": "markup.heading.markdown", "settings": { "foreground": "#8a8a8a", "fontStyle": "" } },
+    { "scope": "punctuation.definition.heading.markdown", "settings": { "foreground": "#6a6a6a" } },
+    { "scope": "markup.bold.markdown", "settings": { "foreground": "#a0a0a0" } },
+    { "scope": "markup.italic.markdown", "settings": { "foreground": "#a0a0a0" } },
+    { "scope": "markup.inline.raw.markdown", "settings": { "foreground": "#a0a0a0" } },
+    { "scope": "markup.underline.link.markdown", "settings": { "foreground": "#8a8a8a" } }
+  ]
+}
+}
