@@ -91,7 +91,8 @@ button.b_danger:hover {
 }
 
 select,
-input[type='text'] {
+input[type='text'],
+input[type='number'] {
   font: inherit;
   color: var(--c_text);
   background: var(--c_win);
@@ -198,4 +199,207 @@ canvas {
   font-size: 11px;
   color: var(--c_muted);
   margin-top: 6px;
+}
+
+/* ---------------------------------------------------------------- dataset_shapes */
+
+.s_label {
+  font-size: 12px;
+  color: var(--c_muted);
+}
+
+.o_grid_shape {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.o_card_shape {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--c_win_bar);
+  border: 1px solid var(--c_border);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.o_card_shape .o_card_head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.o_card_shape .s_name_shape {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+}
+.o_card_shape .b_close {
+  padding: 2px 7px;
+  line-height: 1;
+}
+
+.o_svg_shape {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #0d0f13;
+  border: 1px solid var(--c_border);
+  border-radius: 6px;
+}
+.o_svg_shape .o_outline,
+.o_svg_edit .o_outline {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 0.006;
+}
+.o_svg_shape .o_point {
+  fill: var(--c_accent);
+}
+
+.o_card_shape .b_edit {
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* single-shape editor */
+.o_shape_edit .o_svg_edit {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1;
+  display: block;
+  margin: 0 auto;
+  background: #0d0f13;
+  border: 1px solid var(--c_border);
+  border-radius: 6px;
+  cursor: crosshair;
+  touch-action: none;
+}
+.o_svg_edit.b_full {
+  cursor: default;
+}
+.s_hint.b_full {
+  color: #57d38c;
+}
+.o_svg_edit .o_vertex {
+  fill: var(--c_accent);
+  stroke: #fff;
+  stroke-width: 0.006;
+  cursor: grab;
+}
+.o_svg_edit .o_vertex:hover {
+  fill: #7bb8ff;
+}
+.o_svg_edit .o_point {
+  fill: rgba(255, 255, 255, 0.55);
+}
+
+.o_card_add {
+  align-items: center;
+  justify-content: center;
+  color: var(--c_muted);
+  cursor: pointer;
+  min-height: 120px;
+}
+.o_card_add:hover {
+  border-color: var(--c_accent);
+  color: var(--c_accent);
+}
+.o_card_add .s_plus {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* k-means run list (clickable inertia per run) */
+.o_runs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.b_inertia {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--c_muted);
+  background: var(--c_win_bar);
+  border: 1px solid var(--c_border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.b_inertia:hover {
+  border-color: var(--c_accent);
+  color: var(--c_text);
+}
+.b_inertia.b_best {
+  color: #57d38c;
+}
+.b_inertia.b_sel {
+  background: var(--c_accent_dim);
+  border-color: var(--c_accent);
+  color: var(--c_text);
+}
+
+.o_augment {
+  border-top: 1px solid var(--c_border);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.o_augment .s_section {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.s_section {
+  font-weight: 600;
+}
+
+/* stored sets list */
+.o_set_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--c_border);
+}
+.o_set_row .s_set_name {
+  font-weight: 600;
+}
+.o_set_row.b_active {
+  background: var(--c_accent_dim);
+  border-radius: 5px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* set visualization */
+.o_legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--c_muted);
+}
+.o_legend .o_swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.o_grid_viz {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 6px;
+}
+.o_svg_viz {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #0d0f13;
+  border: 1px solid var(--c_border);
+  border-radius: 4px;
+}
+.o_svg_viz .o_outline_viz {
+  fill: none;
+  stroke-width: 0.02;
+  opacity: 0.85;
 }

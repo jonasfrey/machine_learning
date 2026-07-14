@@ -9,11 +9,14 @@ let o_store = reactive({
   b_connected: false,
   o_state: {
     a_o_dataset2d: [],
+    a_o_shape_set: [],
     a_o_window: [],
     a_s_kind: [],
   },
   // transient, per-client k-means animation result (not part of shared state)
   o_k_means_result: null,
+  // transient, per-client shape-set samples fetched for visualization
+  o_shape_set_samples: null,
 });
 
 let o_socket = null;
@@ -36,6 +39,9 @@ let f_connect = function () {
     if (o_msg.s_type == 'state') o_store.o_state = o_msg.v_data;
     if (o_msg.s_type == 'k_means_result') {
       o_store.o_k_means_result = { ...o_msg.v_data, n_ts_ms: o_msg.n_ts_ms };
+    }
+    if (o_msg.s_type == 'shape_set_samples') {
+      o_store.o_shape_set_samples = { ...o_msg.v_data, n_ts_ms: o_msg.n_ts_ms };
     }
   });
   o_socket.addEventListener('close', () => {

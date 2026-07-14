@@ -4,17 +4,19 @@ import { createApp, computed } from './vendor/vue.esm-browser.prod.js';
 import { o_store, f_send, f_connect } from './ws.js';
 import { c_window } from './c_window.js';
 import { c_dataset2d } from './c_dataset2d.js';
+import { c_dataset_shapes } from './c_dataset_shapes.js';
 import { c_k_means } from './c_k_means.js';
 
 // registry of togglable windows. add a new window by registering its s_type,
 // title, and the component rendered inside it — the topbar + windowing come free.
 let a_o_window_def = [
   { s_type: 'dataset2d', s_title: 'dataset2d', c: 'c_dataset2d' },
+  { s_type: 'dataset_shapes', s_title: 'dataset_shapes', c: 'c_dataset_shapes' },
   { s_type: 'k_means', s_title: 'k_means', c: 'c_k_means' },
 ];
 
 let c_app = {
-  components: { c_window, c_dataset2d, c_k_means },
+  components: { c_window, c_dataset2d, c_dataset_shapes, c_k_means },
   setup() {
     let f_o_window = function (s_type) {
       return o_store.o_state.a_o_window.find((o) => o.s_type == s_type) || null;
